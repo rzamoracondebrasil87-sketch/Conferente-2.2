@@ -20,6 +20,7 @@ interface NotificationContextType {
   markAllAsRead: () => void;
   clearAll: () => void;
   removeNotification: (id: string) => void;
+  showBrowserNotification: (title: string, message?: string, icon?: string) => Promise<void>;
 }
 
 const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
@@ -69,8 +70,27 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
 
   const unreadCount = notifications.filter(n => !n.read).length;
 
+  const showBrowserNotification = async (title: string, message = '', icon = '/icon-192.png') => {
+    try {
+      if (!('Notification' in window)) return;
+
+      let permission = Notification.permission;
+      if (permission !== 'granted') {
+        permission = await Notification.requestPermission();
+      }
+
+      if (permission === 'granted') {
+        // Use the Notification constructor so it shows while the app is open
+        new Notification(title, { body: message, icon });
+      }
+    } catch (err) {
+      // ignore notification errors
+      console.warn('Notification error', err);
+    }
+  };
+
   return (
-    <NotificationContext.Provider value={{ notifications, unreadCount, addNotification, markAsRead, markAllAsRead, clearAll, removeNotification }}>
+    <NotificationContext.Provider value={{ notifications, unreadCount, addNotification, markAsRead, markAllAsRead, clearAll, removeNotification, showBrowserNotification }}>
       {children}
     </NotificationContext.Provider>
   );

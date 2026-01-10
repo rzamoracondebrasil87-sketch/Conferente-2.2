@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { useNotifications } from '../contexts/NotificationContext';
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -11,6 +12,13 @@ export function InstallPrompt() {
   const [showPrompt, setShowPrompt] = useState(false);
   const [isInstalled, setIsInstalled] = useState(false);
   const [dismissed, setDismissed] = useState(false);
+  // Acceder al contexto de notificaciones (si está disponible)
+  let notifContext: any = null;
+  try {
+    notifContext = useNotifications();
+  } catch (e) {
+    notifContext = null;
+  }
 
   useEffect(() => {
     // Verificar si ya está instalada
@@ -36,6 +44,12 @@ export function InstallPrompt() {
       e.preventDefault();
       const event = e as BeforeInstallPromptEvent;
       setInstallPrompt(event);
+      // Mostrar notificación del navegador invitando a instalar (pedir permiso si hace falta)
+      try {
+        notifContext?.showBrowserNotification?.('Instalar Conferente', 'Toca para instalar la app en tu pantalla de inicio', '/icon-192.png');
+      } catch (err) {
+        // ignore
+      }
       
       // Verificar si el usuario ya descartó antes
       const dismissedBefore = localStorage.getItem('installPromptDismissed');
@@ -74,6 +88,15 @@ export function InstallPrompt() {
     };
   }, []);
 
+  // Try to access context via hook; some component trees may not provide it at init
+  const notifContext = (() => {
+    try {
+      return useNotifications();
+    } catch (e) {
+      return null;
+    }
+  })();
+
   const handleInstall = async () => {
     if (installPrompt) {
       try {
@@ -85,6 +108,8 @@ export function InstallPrompt() {
           setIsInstalled(true);
           setShowPrompt(false);
           localStorage.setItem('appInstalled', 'true');
+          // Mostrar notificación de éxito
+          notifContext?.showBrowserNotification?.('App instalada', 'Gracias por instalar Conferente', '/icon-192.png');
         } else {
           console.log('❌ Usuario rechazó instalar la app');
           handleDismiss();

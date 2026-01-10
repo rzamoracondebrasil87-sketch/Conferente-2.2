@@ -50,6 +50,18 @@ self.addEventListener('activate', (event) => {
         });
       });
     })
+    .then(() => {
+      // Intentar mostrar una notificación desde el service worker (si el usuario dio permiso)
+      try {
+        self.registration.showNotification('Conferente actualizado', {
+          body: 'Nueva versión disponible. Abre la app para actualizar.',
+          icon: '/icon-192.png',
+          tag: 'conferente-update'
+        });
+      } catch (err) {
+        // ignore
+      }
+    })
   );
   self.clients.claim();
 });
