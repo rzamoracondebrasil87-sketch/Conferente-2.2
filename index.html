@@ -184,16 +184,63 @@
     <div id="root"></div>
     <script type="module" src="/index.tsx"></script>
     <script>
-      // Register Service Worker
+      // Register Service Worker con detección de actualizaciones
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/sw.js').then((registration) => {
-            console.log('Service Worker registered:', registration);
+          navigator.serviceWorker.register('/sw.js', { 
+            updateViaCache: 'none' 
+          }).then((registration) => {
+            console.log('✅ Service Worker registered:', registration.scope);
+            
+            // Verificar actualizaciones periódicamente
+            setInterval(() => {
+              registration.update().catch(() => {
+                // Ignorar errores silenciosamente
+              });
+            }, 60 * 60 * 1000); // Cada hora
+            
+            // Escuchar actualizaciones del service worker
+            registration.addEventListener('updatefound', () => {
+              const newWorker = registration.installing;
+              if (newWorker) {
+                newWorker.addEventListener('statechange', () => {
+                  if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                    // Nueva versión disponible
+                    console.log('🔄 Nueva versión del Service Worker disponible');
+                    // El componente UpdateNotification manejará la notificación
+                  }
+                });
+              }
+            });
+            
+            // Manejar mensajes del service worker
+            navigator.serviceWorker.addEventListener('message', (event) => {
+              if (event.data && event.data.type === 'SW_UPDATED') {
+                console.log('🔄 Service Worker actualizado:', event.data.version);
+                // El componente UpdateNotification manejará la notificación
+              }
+            });
+            
           }).catch((error) => {
-            console.error('Service Worker registration failed:', error);
+            console.error('❌ Service Worker registration failed:', error);
           });
         });
       }
+      
+      // Exponer función global para verificar actualizaciones manualmente
+      window.checkForUpdates = function() {
+        if ('serviceWorker' in navigator) {
+          navigator.serviceWorker.getRegistration().then((reg) => {
+            if (reg) {
+              reg.update().then(() => {
+                console.log('✅ Actualización verificada');
+              }).catch((error) => {
+                console.error('❌ Error al verificar actualización:', error);
+              });
+            }
+          });
+        }
+      };
     </script>
   </body>
 </html>

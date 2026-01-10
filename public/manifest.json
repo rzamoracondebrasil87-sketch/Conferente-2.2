@@ -2,13 +2,16 @@
   "name": "Conferente - Asistente Inteligente",
   "short_name": "Conferente",
   "description": "App inteligente para análisis y asesoramiento con IA",
+  "id": "/",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait-primary",
   "background_color": "#191022",
   "theme_color": "#7f13ec",
-  "categories": ["productivity"],
+  "categories": ["productivity", "business"],
+  "dir": "ltr",
+  "lang": "pt-BR",
   "screenshots": [
     {
       "src": "/icon-512.png",
@@ -37,17 +40,34 @@
       "purpose": "any"
     },
     {
-      "src": "/icon-192.png",
+      "src": "/icon-192-maskable.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "maskable"
     },
     {
-      "src": "/icon-512.png",
+      "src": "/icon-512-maskable.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
     }
   ],
-  "prefer_related_applications": false
+  "prefer_related_applications": false,
+  "display_override": ["standalone", "minimal-ui"],
+  "shortcuts": [
+    {
+      "name": "Pesar",
+      "short_name": "Pesar",
+      "description": "Iniciar nova pesagem",
+      "url": "/?action=weighing",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Histórico",
+      "short_name": "Histórico",
+      "description": "Ver histórico de pesagens",
+      "url": "/?action=history",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    }
+  ]
 }

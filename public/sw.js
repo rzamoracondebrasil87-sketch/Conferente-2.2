@@ -1,27 +1,33 @@
-const CACHE_NAME = 'conferente-v1';
+// Versión del Service Worker - INCREMENTAR cuando haya cambios
+const SW_VERSION = '2.0.0';
+const CACHE_NAME = `conferente-v${SW_VERSION}`;
 const STATIC_ASSETS = [
   '/',
   '/index.html',
-  '/index.css'
+  '/manifest.json',
+  '/icon-192.png',
+  '/icon-512.png',
+  '/icon-192-maskable.png',
+  '/icon-512-maskable.png'
 ];
 
 // Install event - cache static assets
 self.addEventListener('install', (event) => {
-  console.log('[Service Worker] Installing...');
+  console.log(`[Service Worker v${SW_VERSION}] Installing...`);
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
       console.log('[Service Worker] Caching static assets');
-      return cache.addAll(STATIC_ASSETS).catch(() => {
-        console.log('[Service Worker] Some assets could not be cached');
+      return cache.addAll(STATIC_ASSETS).catch((err) => {
+        console.log('[Service Worker] Some assets could not be cached:', err);
       });
     })
   );
   self.skipWaiting();
 });
 
-// Activate event - clean up old caches
+// Activate event - clean up old caches y notificar actualización
 self.addEventListener('activate', (event) => {
-  console.log('[Service Worker] Activating...');
+  console.log(`[Service Worker v${SW_VERSION}] Activating...`);
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
@@ -32,6 +38,17 @@ self.addEventListener('activate', (event) => {
             return caches.delete(name);
           })
       );
+    }).then(() => {
+      // Notificar a los clientes sobre la actualización
+      return self.clients.matchAll().then((clients) => {
+        clients.forEach((client) => {
+          client.postMessage({
+            type: 'SW_UPDATED',
+            version: SW_VERSION,
+            message: 'Nueva versión disponible. Actualiza la app para obtener las últimas mejoras.'
+          });
+        });
+      });
     })
   );
   self.clients.claim();
@@ -57,10 +74,15 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(
       fetch(request)
         .then((response) => {
-          const clonedResponse = response.clone();
-          caches.open(CACHE_NAME).then((cache) => {
-            cache.put(request, clonedResponse);
-          });
+          // Verificar si hay nueva versión
+          const cachedResponse = caches.match(request);
+          if (cachedResponse) {
+            // Comparar versiones si es posible
+            const responseClone = response.clone();
+            caches.open(CACHE_NAME).then((cache) => {
+              cache.put(request, responseClone);
+            });
+          }
           return response;
         })
         .catch(() => {
@@ -75,13 +97,44 @@ self.addEventListener('fetch', (event) => {
   // Cache-first strategy for other assets
   event.respondWith(
     caches.match(request).then((cached) => {
-      return cached || fetch(request).then((response) => {
-        const clonedResponse = response.clone();
-        caches.open(CACHE_NAME).then((cache) => {
-          cache.put(request, clonedResponse);
+      if (cached) {
+        // Verificar si hay actualización en background
+        fetch(request).then((response) => {
+          if (response.status === 200) {
+            const responseClone = response.clone();
+            caches.open(CACHE_NAME).then((cache) => {
+              cache.put(request, responseClone);
+            });
+          }
+        }).catch(() => {
+          // Ignorar errores de red
         });
+        return cached;
+      }
+      
+      return fetch(request).then((response) => {
+        if (response.status === 200) {
+          const responseClone = response.clone();
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(request, responseClone);
+          });
+        }
         return response;
       });
     })
   );
+});
+
+// Message handler para comunicación con la app
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
+  
+  if (event.data && event.data.type === 'CHECK_UPDATE') {
+    // Verificar actualizaciones manualmente
+    self.registration.update().then(() => {
+      console.log('[Service Worker] Update check completed');
+    });
+  }
 });

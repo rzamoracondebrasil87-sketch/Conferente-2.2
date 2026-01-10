@@ -12,6 +12,7 @@ import AIChatDrawer from './components/AIChatDrawer';
 import SmartAdvisor from './components/SmartAdvisor';
 import TareWarningDialog from './components/TareWarningDialog';
 import { InstallPrompt } from './components/InstallPrompt';
+import { UpdateNotification } from './components/UpdateNotification';
 import { AppView, WeightData, IdentificationData, TareMode, WeighingRecord } from './types';
 import { saveRecord, getHistory } from './utils/historyStorage'; 
 import { useNotifications } from './contexts/NotificationContext';
@@ -398,6 +399,7 @@ const App: React.FC = () => {
         />
 
         <InstallPrompt />
+        <UpdateNotification />
     </div>
   );
 };
