@@ -6,16 +6,26 @@
   "scripts": {
     "dev": "node scripts/generate-pwa-icons.mjs && vite",
     "build": "node scripts/generate-pwa-icons.mjs && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "icons:android": "node scripts/generate-android-icons.mjs",
+    "icons:pwa": "node scripts/generate-pwa-icons.mjs",
+    "icons:all": "node scripts/generate-pwa-icons.mjs && node scripts/generate-android-icons.mjs",
+    "android:setup": "node scripts/setup-capacitor-android.mjs",
+    "android:open": "npx cap open android",
+    "android:sync": "npx cap sync android"
   },
   "dependencies": {
-    "react-dom": "^19.2.3",
+    "@capacitor/android": "^8.0.0",
+    "@capacitor/cli": "^8.0.0",
+    "@capacitor/core": "^8.0.0",
+    "@google/genai": "^1.35.0",
     "react": "^19.2.3",
-    "@google/genai": "^1.35.0"
+    "react-dom": "^19.2.3"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",
     "@vitejs/plugin-react": "^5.0.0",
+    "sharp": "^0.34.5",
     "typescript": "~5.8.2",
     "vite": "^6.2.0"
   }
