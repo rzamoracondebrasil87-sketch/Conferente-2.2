@@ -82,7 +82,7 @@ const AIChatDrawer: React.FC<Props> = ({
       `;
 
       const response = await ai.models.generateContent({
-        model: 'gemini-3-flash-preview',
+        model: 'gemini-2.0-flash',
         contents: textToSend,
         config: { systemInstruction, temperature: 0.4 },
       });
