@@ -1,95 +1,70 @@
-// Versión del Service Worker - INCREMENTAR cuando haya cambios
+// Versión del Service Worker
 const SW_VERSION = '2.0.0';
 const CACHE_NAME = `conferente-v${SW_VERSION}`;
-const STATIC_ASSETS = [
+
+// Archivos para cachear
+const urlsToCache = [
   '/',
   '/index.html',
-  '/manifest.json',
-  '/icon-192.png',
-  '/icon-512.png',
-  '/icon-192-maskable.png',
-  '/icon-512-maskable.png'
+  '/manifest.json'
 ];
 
-// Install event - cache static assets
+// Instalar el Service Worker y cachear recursos
 self.addEventListener('install', (event) => {
-  console.log(`[Service Worker v${SW_VERSION}] Installing...`);
+  console.log(`[SW v${SW_VERSION}] Installing...`);
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      console.log('[Service Worker] Caching static assets');
-      return cache.addAll(STATIC_ASSETS).catch((err) => {
-        console.log('[Service Worker] Some assets could not be cached:', err);
-      });
-    })
+    caches.open(CACHE_NAME)
+      .then((cache) => {
+        console.log('[SW] Caching static assets');
+        return cache.addAll(urlsToCache).catch((err) => {
+          console.log('[SW] Some assets could not be cached:', err);
+        });
+      })
   );
   self.skipWaiting();
 });
 
-// Activate event - clean up old caches y notificar actualización
+// Activar el Service Worker y limpiar caches antiguas
 self.addEventListener('activate', (event) => {
-  console.log(`[Service Worker v${SW_VERSION}] Activating...`);
+  console.log(`[SW v${SW_VERSION}] Activating...`);
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
-        cacheNames
-          .filter((name) => name !== CACHE_NAME)
-          .map((name) => {
-            console.log('[Service Worker] Deleting old cache:', name);
-            return caches.delete(name);
-          })
+        cacheNames.map((cacheName) => {
+          if (cacheName !== CACHE_NAME) {
+            console.log('[SW] Deleting old cache:', cacheName);
+            return caches.delete(cacheName);
+          }
+        })
       );
     }).then(() => {
-      // Notificar a los clientes sobre la actualización
-      return self.clients.matchAll().then((clients) => {
-        clients.forEach((client) => {
-          client.postMessage({
-            type: 'SW_UPDATED',
-            version: SW_VERSION,
-            message: 'Nueva versión disponible. Actualiza la app para obtener las últimas mejoras.'
-          });
-        });
-      });
-    })
-    .then(() => {
-      // Intentar mostrar una notificación desde el service worker (si el usuario dio permiso)
-      try {
-        self.registration.showNotification('Conferente actualizado', {
-          body: 'Nueva versión disponible. Abre la app para actualizar.',
-          icon: '/icon-192.png',
-          tag: 'conferente-update'
-        });
-      } catch (err) {
-        // ignore
-      }
+      console.log('[SW] Claim clients');
+      return self.clients.claim();
     })
   );
-  self.clients.claim();
 });
 
-// Fetch event - network first, then cache
+// Interceptar solicitudes
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
-  // Skip non-GET requests
+  // Solo GET
   if (request.method !== 'GET') {
     return;
   }
 
-  // Skip external APIs (Google Gemini API, fonts, etc.)
+  // Skip external APIs
   if (url.origin !== location.origin) {
     return;
   }
 
-  // Network-first strategy for HTML
+  // Network first para HTML
   if (request.headers.get('accept')?.includes('text/html')) {
     event.respondWith(
       fetch(request)
         .then((response) => {
-          // Verificar si hay nueva versión
-          const cachedResponse = caches.match(request);
-          if (cachedResponse) {
-            // Comparar versiones si es posible
+          if (response.status === 200) {
             const responseClone = response.clone();
             caches.open(CACHE_NAME).then((cache) => {
               cache.put(request, responseClone);
@@ -106,24 +81,12 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Cache-first strategy for other assets
+  // Cache first para otros assets
   event.respondWith(
     caches.match(request).then((cached) => {
       if (cached) {
-        // Verificar si hay actualización en background
-        fetch(request).then((response) => {
-          if (response.status === 200) {
-            const responseClone = response.clone();
-            caches.open(CACHE_NAME).then((cache) => {
-              cache.put(request, responseClone);
-            });
-          }
-        }).catch(() => {
-          // Ignorar errores de red
-        });
         return cached;
       }
-      
       return fetch(request).then((response) => {
         if (response.status === 200) {
           const responseClone = response.clone();
@@ -137,16 +100,9 @@ self.addEventListener('fetch', (event) => {
   );
 });
 
-// Message handler para comunicación con la app
+// Message handler
 self.addEventListener('message', (event) => {
   if (event.data && event.data.type === 'SKIP_WAITING') {
     self.skipWaiting();
-  }
-  
-  if (event.data && event.data.type === 'CHECK_UPDATE') {
-    // Verificar actualizaciones manualmente
-    self.registration.update().then(() => {
-      console.log('[Service Worker] Update check completed');
-    });
   }
 });

@@ -184,6 +184,30 @@
     <div id="root"></div>
     <script type="module" src="/index.tsx"></script>
     <script>
+      // Variable global para almacenar el evento beforeinstallprompt
+      let deferredPrompt = null;
+
+      // Escuchar el evento beforeinstallprompt
+      window.addEventListener('beforeinstallprompt', (event) => {
+        console.log('✅ beforeinstallprompt event fired - App is installable!');
+        // Prevenir que el navegador muestre el prompt automático
+        event.preventDefault();
+        // Guardar el evento para usarlo después
+        deferredPrompt = event;
+        // Disparar un evento personalizado para que InstallPrompt.tsx lo capture
+        window.dispatchEvent(new CustomEvent('pwa-installable', { detail: { prompt: event } }));
+      });
+
+      // Escuchar el evento appinstalled
+      window.addEventListener('appinstalled', () => {
+        console.log('✅ App installed successfully!');
+        deferredPrompt = null;
+        window.dispatchEvent(new CustomEvent('pwa-installed'));
+      });
+
+      // Exponer deferredPrompt globalmente para InstallPrompt.tsx
+      window.deferredPrompt = deferredPrompt;
+
       // Register Service Worker con detección de actualizaciones
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
@@ -205,19 +229,9 @@
               if (newWorker) {
                 newWorker.addEventListener('statechange', () => {
                   if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                    // Nueva versión disponible
-                    console.log('🔄 Nueva versión del Service Worker disponible');
-                    // El componente UpdateNotification manejará la notificación
+                    console.log('🔄 New Service Worker version available');
                   }
                 });
-              }
-            });
-            
-            // Manejar mensajes del service worker
-            navigator.serviceWorker.addEventListener('message', (event) => {
-              if (event.data && event.data.type === 'SW_UPDATED') {
-                console.log('🔄 Service Worker actualizado:', event.data.version);
-                // El componente UpdateNotification manejará la notificación
               }
             });
             
@@ -233,9 +247,9 @@
           navigator.serviceWorker.getRegistration().then((reg) => {
             if (reg) {
               reg.update().then(() => {
-                console.log('✅ Actualización verificada');
+                console.log('✅ Update check completed');
               }).catch((error) => {
-                console.error('❌ Error al verificar actualización:', error);
+                console.error('❌ Error checking for updates:', error);
               });
             }
           });
