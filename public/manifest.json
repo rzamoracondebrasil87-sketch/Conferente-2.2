@@ -1,7 +1,7 @@
 {
   "name": "Conferente - Asistente Inteligente",
   "short_name": "Conferente",
-  "description": "App inteligente para análisis, asesoramiento y gestión de datos",
+  "description": "App inteligente para análisis y asesoramiento",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
@@ -32,28 +32,6 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
-    }
-  ],
-  "screenshots": [
-    {
-      "src": "/icon-512.png",
-      "sizes": "512x512",
-      "type": "image/png"
-    }
-  ],
-  "categories": ["productivity", "utilities"],
-  "shortcuts": [
-    {
-      "name": "Nuevo Análisis",
-      "short_name": "Análisis",
-      "description": "Inicia un nuevo análisis",
-      "url": "/?action=new-analysis",
-      "icons": [
-        {
-          "src": "/icon-192.png",
-          "sizes": "192x192"
-        }
-      ]
     }
   ]
 }
