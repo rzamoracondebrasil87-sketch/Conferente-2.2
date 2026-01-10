@@ -88,14 +88,7 @@ export function InstallPrompt() {
     };
   }, []);
 
-  // Try to access context via hook; some component trees may not provide it at init
-  const notifContext = (() => {
-    try {
-      return useNotifications();
-    } catch (e) {
-      return null;
-    }
-  })();
+  // (notifContext ya inicializado arriba)
 
   const handleInstall = async () => {
     if (installPrompt) {
