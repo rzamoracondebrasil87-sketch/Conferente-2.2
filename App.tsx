@@ -10,6 +10,7 @@ import TicketScreen from './components/TicketScreen';
 import Toast from './components/Toast';
 import AIChatDrawer from './components/AIChatDrawer'; 
 import SmartAdvisor from './components/SmartAdvisor';
+import { InstallPrompt } from './components/InstallPrompt';
 import { AppView, WeightData, IdentificationData, TareMode, WeighingRecord } from './types';
 import { saveRecord, getHistory } from './utils/historyStorage'; 
 import { useNotifications } from './contexts/NotificationContext';
@@ -322,6 +323,8 @@ const App: React.FC = () => {
                 onClose={() => setToast(null)} 
             />
         )}
+
+        <InstallPrompt />
     </div>
   );
 };
