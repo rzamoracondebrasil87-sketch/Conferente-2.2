@@ -44,7 +44,14 @@ const AIChatDrawer: React.FC<Props> = ({
     setIsLoading(true);
 
     try {
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+      const apiKey = process.env.API_KEY || (window as any).GEMINI_API_KEY;
+      if (!apiKey) {
+        setMessages([...newMessages, { role: 'ai', text: "⚠️ API Key no configurada. Por favor, contacta al administrador." }]);
+        setIsLoading(false);
+        return;
+      }
+      
+      const ai = new GoogleGenAI({ apiKey });
       
       const liveContext = {
           CONTEXTO_TEMPO_REAL: {
