@@ -1,37 +1,16 @@
 {
-  "name": "Conferente - Asistente Inteligente",
+  "name": "Conferente",
   "short_name": "Conferente",
-  "description": "App inteligente para análisis y asesoramiento",
+  "description": "App inteligente",
   "start_url": "/",
-  "scope": "/",
   "display": "standalone",
-  "orientation": "portrait-primary",
   "background_color": "#191022",
   "theme_color": "#7f13ec",
   "icons": [
     {
-      "src": "/icon-192.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
       "src": "/icon-512.png",
       "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "/icon-192-maskable.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "maskable"
-    },
-    {
-      "src": "/icon-512-maskable.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "maskable"
+      "type": "image/png"
     }
   ]
 }
