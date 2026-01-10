@@ -15,11 +15,12 @@ interface Props {
   onPackagingQuantityChange: (val: number) => void;
   quantityRef?: React.RefObject<HTMLInputElement>;
   onNextStep?: () => void;
+  onCollapse?: () => void;
 }
 
 const TareControl: React.FC<Props> = ({ 
   mode, onChange, onResetTare, onTareChange, currentTare, quantity, onQuantityChange,
-  packagingUnitWeight, onPackagingUnitWeightChange, packagingQuantity, onPackagingQuantityChange, quantityRef, onNextStep
+  packagingUnitWeight, onPackagingUnitWeightChange, packagingQuantity, onPackagingQuantityChange, quantityRef, onNextStep, onCollapse
 }) => {
   const [localUnitTareStr, setLocalUnitTareStr] = useState(currentTare > 0 ? (currentTare * 1000).toString() : '');
   const [isExpanded, setIsExpanded] = useState(false);
@@ -71,6 +72,11 @@ const TareControl: React.FC<Props> = ({
         // Auto-jump to Gross Weight if weight entered and field is active
         if (activeInput === 'unit' && grams > 0) {
             timerRef.current = setTimeout(() => {
+                // Contraer tara antes de saltar
+                if (isExpanded) {
+                    setIsExpanded(false);
+                    onCollapse?.();
+                }
                 onNextStep?.();
             }, 1000);
         }

@@ -22,7 +22,7 @@ const Header: React.FC<Props> = ({ isMenuOpen, onCloseMenu, onNavigate, userName
   return (
     <>
     {/* Header Area */}
-    <header className="pt-8 px-6 pb-6 flex items-center justify-between sticky top-0 z-20 bg-background/90 backdrop-blur-md">
+    <header className="pt-[max(env(safe-area-inset-top),24px)] px-6 pb-6 flex items-center justify-between sticky top-0 z-20 bg-background border-b border-white/5">
       <div className="flex items-center gap-3">
         <div className="w-10 h-10 rounded-full border border-white/10 shadow-lg shadow-purple-900/20 overflow-hidden">
              {userPhoto ? (
