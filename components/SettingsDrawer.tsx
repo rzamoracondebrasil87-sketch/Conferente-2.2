@@ -26,11 +26,28 @@ const SettingsDrawer: React.FC<Props> = ({ isOpen, onClose, userName, userPhoto,
   const toggleTheme = () => {
     const newMode = !isDark;
     setIsDark(newMode);
-    if (newMode) document.documentElement.classList.add('dark');
-    else document.documentElement.classList.remove('dark');
     
+    // Guardar en localStorage
+    localStorage.setItem('theme_mode', newMode ? 'dark' : 'light');
+    
+    // Aplicar clase dark al documento
+    if (newMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+    
+    // Aplicar tema usando la función global
     if (typeof (window as any).updateAppTheme === 'function') {
         (window as any).updateAppTheme('refined', newMode);
+    } else if (typeof (window as any).applyAppTheme === 'function') {
+        (window as any).applyAppTheme('refined', newMode);
+    }
+    
+    // Actualizar meta theme-color
+    const metaThemeColor = document.getElementById('theme-color');
+    if (metaThemeColor) {
+        metaThemeColor.setAttribute('content', newMode ? '#191022' : '#F7F6F8');
     }
   };
 

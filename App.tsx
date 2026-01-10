@@ -10,11 +10,21 @@ import TicketScreen from './components/TicketScreen';
 import Toast from './components/Toast';
 import AIChatDrawer from './components/AIChatDrawer'; 
 import SmartAdvisor from './components/SmartAdvisor';
+import TareWarningDialog from './components/TareWarningDialog';
 import { InstallPrompt } from './components/InstallPrompt';
 import { AppView, WeightData, IdentificationData, TareMode, WeighingRecord } from './types';
 import { saveRecord, getHistory } from './utils/historyStorage'; 
 import { useNotifications } from './contexts/NotificationContext';
-import { learn, getKnownSuppliers, getKnownProducts, predict } from './utils/learningSystem';
+import { 
+  learn, 
+  getKnownSuppliers, 
+  getKnownProducts, 
+  predict, 
+  checkOtherSupplierTare, 
+  predictTareForSupplierProduct,
+  confirmTare,
+  TareWarning
+} from './utils/learningSystem';
 
 const App: React.FC = () => {
   const [view, setView] = useState<AppView>('weighing');
@@ -54,6 +64,8 @@ const App: React.FC = () => {
 
   const [photo, setPhoto] = useState<string | null>(null);
   const [toast, setToast] = useState<{msg: string, type: 'success' | 'error' | 'info'} | null>(null);
+  const [tareWarning, setTareWarning] = useState<TareWarning | null>(null);
+  const [showTareWarning, setShowTareWarning] = useState(false);
 
   const [suggestions, setSuggestions] = useState<{suppliers: string[], products: string[]}>({ suppliers: [], products: [] });
 
@@ -90,6 +102,34 @@ const App: React.FC = () => {
     }));
   }, [weight.current, tareMode, productTare, productQty, pkgUnitWeight, pkgQty]);
 
+  // Detectar cambios de tara cuando cambian supplier y product
+  useEffect(() => {
+    if (ident.supplier && ident.product && !showTareWarning) {
+      // Primero intentar obtener la tara específica de este fornecedor+producto
+      const specificTare = predictTareForSupplierProduct(ident.supplier, ident.product);
+      
+      if (specificTare !== null && specificTare > 0) {
+        // Si hay tara específica, usarla automáticamente
+        if (Math.abs(productTare - specificTare) > 0.001) {
+          setProductTare(specificTare);
+          setProductQty(1);
+        }
+      } else {
+        // Si no hay tara específica, verificar si hay de otro fornecedor
+        const warning = checkOtherSupplierTare(ident.supplier, ident.product);
+        if (warning) {
+          // Solo mostrar si no hay tara actual o si la tara es diferente
+          const shouldShow = productTare === 0 || Math.abs(productTare - warning.tare) > 0.001;
+          if (shouldShow) {
+            setTareWarning(warning);
+            setShowTareWarning(true);
+          }
+        }
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ident.supplier, ident.product]);
+
   const handleUpdateProfile = (name: string, photo: string | null) => {
       setUserName(name);
       setUserPhoto(photo);
@@ -109,11 +149,35 @@ const App: React.FC = () => {
     const prediction = predict(supplier);
     if (prediction) {
         setIdent(prev => ({ ...prev, product: prediction.product }));
-        if (prediction.tare > 0) {
-            setProductTare(prediction.tare);
-            setProductQty(1);
-        }
+        // La tara se establecerá automáticamente en el useEffect cuando se actualice el product
     }
+  };
+
+  const handleTareWarningConfirm = (tare: number) => {
+    if (ident.supplier && ident.product) {
+      // Confirmar la tara (se vuelve predeterminada para este fornecedor+producto)
+      confirmTare(ident.supplier, ident.product, tare);
+      setProductTare(tare);
+      setProductQty(1);
+      setToast({ msg: `Tara de ${(tare * 1000).toFixed(0)}g confirmada como padrão`, type: 'success' });
+    }
+    setShowTareWarning(false);
+    setTareWarning(null);
+  };
+
+  const handleTareWarningCancel = () => {
+    setShowTareWarning(false);
+    setTareWarning(null);
+  };
+
+  const handleTareWarningKeepCurrent = () => {
+    if (ident.supplier && ident.product && productTare > 0) {
+      // Confirmar la tara actual como predeterminada
+      confirmTare(ident.supplier, ident.product, productTare);
+      setToast({ msg: `Tara atual de ${(productTare * 1000).toFixed(0)}g mantida`, type: 'info' });
+    }
+    setShowTareWarning(false);
+    setTareWarning(null);
   };
 
   const handleRegister = () => {
@@ -323,6 +387,15 @@ const App: React.FC = () => {
                 onClose={() => setToast(null)} 
             />
         )}
+
+        <TareWarningDialog
+            isOpen={showTareWarning}
+            warning={tareWarning}
+            currentTare={productTare}
+            onConfirm={handleTareWarningConfirm}
+            onCancel={handleTareWarningCancel}
+            onKeepCurrent={handleTareWarningKeepCurrent}
+        />
 
         <InstallPrompt />
     </div>

@@ -1,0 +1,16 @@
+{
+  "appName": "Conferente",
+  "appVersion": "1.0.0",
+  "packageId": "com.conferente.app",
+  "launcherName": "Conferente",
+  "host": "conferente-2-2.vercel.app",
+  "protocol": "https",
+  "startUrl": "/",
+  "iconUrl": "https://conferente-2-2.vercel.app/icon-512.png",
+  "maskableIconUrl": "https://conferente-2-2.vercel.app/icon-512-maskable.png",
+  "shortcuts": [],
+  "backgroundColor": "#191022",
+  "themeColor": "#7f13ec",
+  "orientation": "portrait",
+  "enableNotifications": true
+}

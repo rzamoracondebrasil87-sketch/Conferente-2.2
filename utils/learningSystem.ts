@@ -124,3 +124,104 @@ export const getKnownProducts = (): string[] => {
 
   return Array.from(allProducts).sort();
 };
+
+// Nueva función: Detectar si hay tara para este producto de otro fornecedor
+export interface TareWarning {
+  supplier: string;
+  tare: number;
+  usageCount: number;
+  message: string;
+}
+
+export const checkOtherSupplierTare = (currentSupplier: string, product: string): TareWarning | null => {
+  if (!currentSupplier || !product) return null;
+  
+  const db = getDB();
+  const currentSupplierSlug = normalize(currentSupplier);
+  const productSlug = normalize(product);
+  
+  // Buscar en todos los fornecedores si hay este producto con tara diferente
+  let foundTare: { supplier: string; tare: number; usageCount: number } | null = null;
+  
+  Object.entries(db.suppliers).forEach(([supplierSlug, supplierData]) => {
+    // Ignorar el fornecedor actual
+    if (supplierSlug === currentSupplierSlug) return;
+    
+    const productData = supplierData.products[productSlug];
+    if (productData && productData.tare > 0) {
+      // Si encontramos una tara y es la primera, o si tiene más uso, la preferimos
+      if (!foundTare || productData.usage_count > foundTare.usageCount) {
+        foundTare = {
+          supplier: supplierData.display_name,
+          tare: productData.tare,
+          usageCount: productData.usage_count
+        };
+      }
+    }
+  });
+  
+  if (foundTare) {
+    // Verificar si el fornecedor actual ya tiene este producto con tara diferente
+    const currentProductData = db.suppliers[currentSupplierSlug]?.products[productSlug];
+    const hasCurrentTare = currentProductData && currentProductData.tare > 0;
+    const tareDiffers = hasCurrentTare && Math.abs(currentProductData.tare - foundTare.tare) > 0.001;
+    
+    if (!hasCurrentTare) {
+      // No hay tara para este fornecedor, pero otro fornecedor sí tiene
+      return {
+        ...foundTare,
+        message: `Existe uma tara registrada para "${product}" de "${foundTare.supplier}" (${(foundTare.tare * 1000).toFixed(0)}g). Deseja usar esta tara ou definir uma nova?`
+      };
+    } else if (tareDiffers) {
+      // Hay tara diferente de otro fornecedor
+      return {
+        ...foundTare,
+        message: `Atenção: A tara para "${product}" de "${foundTare.supplier}" é ${(foundTare.tare * 1000).toFixed(0)}g, mas você tem ${(currentProductData.tare * 1000).toFixed(0)}g para este fornecedor. As taras podem variar por fornecedor. Deseja atualizar para ${(foundTare.tare * 1000).toFixed(0)}g?`
+      };
+    }
+  }
+  
+  return null;
+};
+
+// Nueva función: Obtener todas las taras de un producto de diferentes fornecedores
+export interface ProductTareInfo {
+  supplier: string;
+  tare: number;
+  usageCount: number;
+  lastUsed: number;
+}
+
+export const getAllProductTares = (product: string): ProductTareInfo[] => {
+  if (!product) return [];
+  
+  const db = getDB();
+  const productSlug = normalize(product);
+  const tares: ProductTareInfo[] = [];
+  
+  Object.values(db.suppliers).forEach(supplierData => {
+    const productData = supplierData.products[productSlug];
+    if (productData && productData.tare > 0) {
+      tares.push({
+        supplier: supplierData.display_name,
+        tare: productData.tare,
+        usageCount: productData.usage_count,
+        lastUsed: productData.last_used_at
+      });
+    }
+  });
+  
+  // Ordenar por uso más reciente
+  return tares.sort((a, b) => b.lastUsed - a.lastUsed);
+};
+
+// Función mejorada para predecir tara de producto+fornecedor específico
+export const predictTareForSupplierProduct = (supplier: string, product: string): number | null => {
+  return predictProductTare(supplier, product);
+};
+
+// Actualizar tara confirmada (se vuelve predeterminada para ese fornecedor+producto)
+export const confirmTare = (supplier: string, product: string, tare: number) => {
+  learn(supplier, product, tare);
+  console.log(`[Learning] Tare confirmed: ${supplier} -> ${product} = ${tare}kg (now default)`);
+};
