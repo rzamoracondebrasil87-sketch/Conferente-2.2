@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- Background -->
+  <circle cx="256" cy="256" r="256" fill="#e8ddf5"/>
+  
+  <!-- Main clipboard shape -->
+  <g>
+    <!-- Clipboard body -->
+    <rect x="60" y="80" width="392" height="380" rx="32" fill="none" stroke="#fff" stroke-width="24"/>
+    
+    <!-- Clipboard clip -->
+    <rect x="200" y="20" width="112" height="80" rx="20" fill="none" stroke="#1a3a52" stroke-width="20"/>
+    
+    <!-- Chart bars -->
+    <g transform="translate(120, 150)">
+      <!-- Bar 1 (red) -->
+      <rect x="20" y="80" width="35" height="60" rx="8" fill="#ef4444"/>
+      <!-- Bar 2 (blue) -->
+      <rect x="70" y="60" width="35" height="80" rx="8" fill="#3b82f6"/>
+      <!-- Bar 3 (red-orange) -->
+      <rect x="120" y="40" width="35" height="100" rx="8" fill="#ff6b5b"/>
+      <!-- Bar 4 (blue) -->
+      <rect x="170" y="60" width="35" height="80" rx="8" fill="#3b82f6"/>
+    </g>
+    
+    <!-- Text lines -->
+    <line x1="100" y1="260" x2="412" y2="260" stroke="#1a3a52" stroke-width="8" stroke-linecap="round"/>
+    <line x1="100" y1="290" x2="412" y2="290" stroke="#1a3a52" stroke-width="8" stroke-linecap="round"/>
+    <line x1="100" y1="320" x2="300" y2="320" stroke="#1a3a52" stroke-width="8" stroke-linecap="round"/>
+    
+    <!-- Bottom box -->
+    <rect x="80" y="360" width="352" height="60" rx="12" fill="none" stroke="#1a3a52" stroke-width="8"/>
+  </g>
+</svg>

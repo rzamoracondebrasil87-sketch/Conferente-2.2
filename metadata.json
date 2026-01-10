@@ -1,0 +1,7 @@
+{
+  "name": "Conferente 2.2",
+  "description": "Industrial weighing application interface for logistics operators.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
