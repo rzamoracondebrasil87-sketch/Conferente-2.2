@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { useNotifications } from '../contexts/NotificationContext';
 
 interface UpdateInfo {
   version: string;
@@ -12,12 +11,6 @@ export function UpdateNotification() {
   const [updateInfo, setUpdateInfo] = useState<UpdateInfo | null>(null);
   const [registration, setRegistration] = useState<ServiceWorkerRegistration | null>(null);
   const [dismissed, setDismissed] = useState(false);
-  let notifContext: any = null;
-  try {
-    notifContext = useNotifications();
-  } catch (e) {
-    notifContext = null;
-  }
 
   useEffect(() => {
     // Verificar si el service worker está soportado
@@ -42,10 +35,17 @@ export function UpdateNotification() {
           if (dismissedVersion !== version) {
             setUpdateAvailable(true);
             setDismissed(false);
+            // Mostrar notificación del navegador
             try {
-              notifContext?.showBrowserNotification?.('Actualización disponible', message, '/icon-192.png');
+              if ('Notification' in window && Notification.permission === 'granted') {
+                new Notification('Actualización disponible', {
+                  body: message,
+                  icon: '/icon-192.png',
+                  tag: 'conferente-update'
+                });
+              }
             } catch (err) {
-              // ignore
+              console.warn('Error showing notification:', err);
             }
           }
         }
@@ -82,9 +82,15 @@ export function UpdateNotification() {
                 setUpdateAvailable(true);
                 setDismissed(false);
                 try {
-                  notifContext?.showBrowserNotification?.('Actualización disponible', 'Nueva versión lista para instalar', '/icon-192.png');
-                } catch (err) {
-                  // ignore
+                   if ('Notification' in window && Notification.permission === 'granted') {
+                     new Notification('Actualización disponible', {
+                       body: 'Nueva versión lista para instalar',
+                       icon: '/icon-192.png',
+                       tag: 'conferente-update'
+                     });
+                   }
+                 } catch (err) {
+                   console.warn('Error showing notification:', err);
                 }
               }
             }
