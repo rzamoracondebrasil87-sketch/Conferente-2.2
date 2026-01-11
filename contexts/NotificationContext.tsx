@@ -1,26 +1,24 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
-import { AppView } from '../types';
+/**
+ * Notification Context - Centralized notification management
+ * Handles app-wide notifications and system messages
+ */
 
-export interface NotificationItem {
-  id: string;
-  title: string;
-  message: string;
-  time: string;
-  timestamp: number;
-  type: 'info' | 'success' | 'warning' | 'error' | 'ai';
-  read: boolean;
-  actionRoute?: AppView;
-}
+import React, { createContext, useContext, useState, ReactNode, useCallback } from 'react';
+import { AppView, NotificationItem } from '../types';
 
 interface NotificationContextType {
   notifications: NotificationItem[];
   unreadCount: number;
-  addNotification: (title: string, message: string, type?: NotificationItem['type'], actionRoute?: AppView) => void;
+  addNotification: (
+    title: string,
+    message: string,
+    type?: NotificationItem['type'],
+    actionRoute?: AppView
+  ) => void;
   markAsRead: (id: string) => void;
   markAllAsRead: () => void;
   clearAll: () => void;
   removeNotification: (id: string) => void;
-  showBrowserNotification: (title: string, message?: string, icon?: string) => Promise<void>;
 }
 
 const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
@@ -28,69 +26,65 @@ const NotificationContext = createContext<NotificationContextType | undefined>(u
 export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [notifications, setNotifications] = useState<NotificationItem[]>([
     {
-        id: 'welcome-1',
-        title: 'Sistema Iniciado',
-        message: 'Conferente 2.1 pronto para operação.',
-        time: new Date().toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'}),
-        timestamp: Date.now(),
-        type: 'info',
-        read: false
+      id: 'welcome-1',
+      title: 'Sistema Iniciado',
+      message: 'Conferente 2.2 pronto para operação.',
+      time: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+      timestamp: Date.now(),
+      type: 'info',
+      read: false
     }
   ]);
 
-  const addNotification = (title: string, message: string, type: NotificationItem['type'] = 'info', actionRoute?: AppView) => {
-    const newNotif: NotificationItem = {
-      id: Date.now().toString() + Math.random().toString().slice(2, 5),
-      title,
-      message,
-      time: new Date().toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'}),
-      timestamp: Date.now(),
-      type,
-      read: false,
-      actionRoute
-    };
-    setNotifications(prev => [newNotif, ...prev]);
-  };
+  const addNotification = useCallback(
+    (title: string, message: string, type: NotificationItem['type'] = 'info', actionRoute?: AppView) => {
+      const newNotif: NotificationItem = {
+        id: `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+        title,
+        message,
+        time: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+        timestamp: Date.now(),
+        type,
+        read: false,
+        actionRoute
+      };
+      setNotifications(prev => [newNotif, ...prev]);
+    },
+    []
+  );
 
-  const markAsRead = (id: string) => {
-    setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
-  };
+  const markAsRead = useCallback((id: string) => {
+    setNotifications(prev =>
+      prev.map(n => (n.id === id ? { ...n, read: true } : n))
+    );
+  }, []);
 
-  const markAllAsRead = () => {
+  const markAllAsRead = useCallback(() => {
     setNotifications(prev => prev.map(n => ({ ...n, read: true })));
-  };
+  }, []);
 
-  const clearAll = () => {
+  const clearAll = useCallback(() => {
     setNotifications([]);
-  };
+  }, []);
 
-  const removeNotification = (id: string) => {
-      setNotifications(prev => prev.filter(n => n.id !== id));
-  };
+  const removeNotification = useCallback((id: string) => {
+    setNotifications(prev => prev.filter(n => n.id !== id));
+  }, []);
 
   const unreadCount = notifications.filter(n => !n.read).length;
 
-  const showBrowserNotification = async (title: string, message = '', icon = '/icon-192.png') => {
-    try {
-      if (!('Notification' in window)) return;
-
-      let permission = Notification.permission;
-      if (permission !== 'granted') {
-        permission = await Notification.requestPermission();
-      }
-
-      if (permission === 'granted') {
-        // Use the Notification constructor so it shows while the app is open
-        new Notification(title, { body: message, icon });
-      }
-    } catch (err) {
-      // ignore notification errors
-      console.warn('Notification error', err);
-    }
+  const value: NotificationContextType = {
+    notifications,
+    unreadCount,
+    addNotification,
+    markAsRead,
+    markAllAsRead,
+    clearAll,
+    removeNotification
   };
 
   return (
-    <NotificationContext.Provider value={{ notifications, unreadCount, addNotification, markAsRead, markAllAsRead, clearAll, removeNotification, showBrowserNotification }}>
+    <NotificationContext.Provider value={value}>
       {children}
     </NotificationContext.Provider>
   );
@@ -99,7 +93,7 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
 export const useNotifications = () => {
   const context = useContext(NotificationContext);
   if (!context) {
-    throw new Error('useNotifications must be used within a NotificationProvider');
+    throw new Error('useNotifications must be used within NotificationProvider');
   }
   return context;
 };

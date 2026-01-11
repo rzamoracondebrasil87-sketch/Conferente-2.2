@@ -1,6 +1,8 @@
+/**
+ * Core type definitions for Conferente weighing management app
+ */
 
 export type TareMode = 'manual' | 'none';
-
 export type AppView = 'weighing' | 'history' | 'ticket';
 
 export interface WeightData {
@@ -20,12 +22,47 @@ export interface WeighingRecord {
   id: string;
   supplier: string;
   product: string;
-  targetWeight: number; // Peso da Nota
-  grossWeight: number;  // Peso Bruto
-  tare: number;         // Tara usada (Total)
-  boxQuantity?: number; // Quantidade de caixas
-  netWeight: number;    // Peso Liquido
+  targetWeight: number;
+  grossWeight: number;
+  tare: number;
+  boxQuantity?: number;
+  netWeight: number;
   timestamp: number;
   hasPhoto: boolean;
-  photoData?: string;   // Base64 encoded image string
+  photoData?: string;
+}
+
+export interface TareWarning {
+  supplier: string;
+  tare: number;
+  usageCount: number;
+  message: string;
+}
+
+export interface ProductMemory {
+  display_name: string;
+  tare: number;
+  usage_count: number;
+  last_used_at: number;
+}
+
+export interface SupplierMemory {
+  display_name: string;
+  last_product_slug: string;
+  products: Record<string, ProductMemory>;
+}
+
+export interface Database {
+  suppliers: Record<string, SupplierMemory>;
+}
+
+export interface NotificationItem {
+  id: string;
+  title: string;
+  message: string;
+  time: string;
+  timestamp: number;
+  type: 'info' | 'success' | 'warning' | 'error' | 'ai';
+  read: boolean;
+  actionRoute?: AppView;
 }
